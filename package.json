@@ -1,7 +1,7 @@
 {
   "name": "picopack",
   "version": "0.0.1",
-  "description": "A simple TypeScript module bundler",
+  "description": "Tiny library bundler only use TypeScript Compiler API.",
   "repository": "git@github.com:utatti/pipopack.git",
   "author": "Yisar <changhao2333@gmail.com>",
   "license": "MIT",
