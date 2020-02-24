@@ -87,21 +87,13 @@ if (diagnostics.length) {
 /*
  * Compile graph
  */
-type Module = {
-  id: number
-  file: string
-  code: string
-}
 
-let moduleId = 0
-let patchToId = new Map([[entryFile, moduleId]])
-let files = [entryFile]
+let pathQueue = [entryFile]
+let codes: string[] = []
 
-function compile(file: string): Module {
-  let id = patchToId.get(file)!
-
-  let content = readFile(file, 'utf-8')
-  let source = ts.createSourceFile(file, content, ts.ScriptTarget.ES2015)
+function compile(path: string) {
+  let content = readFile(path, 'utf-8')
+  let source = ts.createSourceFile(path, content, ts.ScriptTarget.ES2015)
 
   source.forEachChild(node => {
     if (node.kind === ts.SyntaxKind.ImportDeclaration) {
@@ -111,57 +103,28 @@ function compile(file: string): Module {
 
       let depPath: string
       if (dep.startsWith('.')) {
-        depPath = localModulePath(dep, file)
+        depPath = localModulePath(dep, path)
       } else {
-        depPath = npmModulePath(dep, file)
+        depPath = npmModulePath(dep, path)
       }
-
-      let depID = patchToId.get(depPath)
-      if (depID === undefined) {
-        depID = ++moduleId
-        patchToId.set(depPath, depID)
-        files.push(depPath)
-      }
-      console.log(files,patchToId)
-    } else {
-      // console.log(node)
+      pathQueue.push(depPath)
+    } else if (node.kind === ts.SyntaxKind.ExpressionStatement) {
+      codes.push(node.expression.getText(source))
+    } else if (node.kind === ts.SyntaxKind.FunctionDeclaration) {
+      const name = node.name.getText(source)
+      const block = node.body.getText(source)
+      let c =  `function ${name}()${block}`
+      codes.push(c)
     }
   })
-
-  let tm = ts.transpileModule(content, {
-    compilerOptions: {
-      target: ts.ScriptTarget.ES5,
-      module: ts.ModuleKind.CommonJS,
-      noImplicitUseStrict: true,
-      pretty: true
-    }
-  })
-
-  let code = tm.outputText
-
-  return { id, file, code }
 }
 
-// Create graph
-
-let graph: Array<Module> = []
-
-let file
-while ((file = files.shift())) {
-  graph.push(compile(file))
-}
-/*
- * Create output code
- */
-
-function generate(graph: Array<Module>): Iterable<string> {
-  let result = ''
-  graph.forEach(mod => {
-    result += mod.code
-  })
-  return result
+let path
+while(path=pathQueue.shift()){
+  compile(path)
 }
 
-let result = generate(graph)
+
+let result = codes.join('\n\n')
 
 writeFile(option.output, result)
