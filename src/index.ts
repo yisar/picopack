@@ -117,7 +117,7 @@ function compile(path: string) {
         blocks.push(node.expression.getText(source))
         break
       default:
-        error('not Supported now')
+        error('AST not Supported.')
     }
   })
 }
