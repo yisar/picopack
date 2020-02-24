@@ -92,15 +92,13 @@ type Module = {
   transpiled: string
 }
 
-let moduleID = 0
-let fileModuleIdMap = new Map([[entryFile, moduleID]])
-
-console.log(fileModuleIdMap)
+let moduleId = 0
+let moduleToId = new Map([[entryFile, moduleId]])
 
 let files = [entryFile]
 
 function compile(file: string): Module {
-  let id = fileModuleIdMap.get(file)!
+  let id = moduleToId.get(file)!
   let deps = new Map<string, number>()
 
   let content = readFile(file, 'utf-8')
@@ -120,10 +118,10 @@ function compile(file: string): Module {
       } else {
         depPath = npmModulePath(dep, file)
       }
-      let depID = fileModuleIdMap.get(depPath)
+      let depID = moduleToId.get(depPath)
       if (depID === undefined) {
-        depID = ++moduleID
-        fileModuleIdMap.set(depPath, depID)
+        depID = ++moduleId
+        moduleToId.set(depPath, depID)
         files.push(depPath)
       }
       deps.set(dep, depID)

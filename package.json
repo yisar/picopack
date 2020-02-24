@@ -24,7 +24,6 @@
     "typescript": "^2.9.1"
   },
   "devDependencies": {
-    "moment": "^2.22.2",
     "nodemon": "^2.0.2"
   }
 }
