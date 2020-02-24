@@ -8,6 +8,9 @@ function error(msg: string): any {
 }
 
 let input = process.argv[2]
+
+console.log(input)
+
 if (!input) error('No input is provided.')
 
 let isFile = (path: string) => exists(path) && stat(path).isFile()
@@ -176,4 +179,4 @@ for (let code of generate(modules)) {
   result += code + '\n'
 }
 
-writeFile(`dist/index.js`, result)
+writeFile(`./index.js`, result)
