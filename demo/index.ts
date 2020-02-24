@@ -1,3 +1,3 @@
-import { currentDate } from "./module";
+import { module } from "./module";
 
-console.log(currentDate());
+console.log(module());

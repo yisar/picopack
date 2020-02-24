@@ -25,12 +25,19 @@ if (!option.input) error('No input is provided.')
 let isFile = (path: string) => exists(path) && stat(path).isFile()
 let isDir = (path: string) => exists(path) && stat(path).isDirectory()
 
+/* Resolve modules, support follows:
+  - module/
+  - module/index
+  - module/index.ts 
+*/
 function localModulePath(path: string, from?: string): string {
   let absPath = from ? resolve(dirname(from), path) : resolve(path)
   let tsPath = absPath.endsWith('.ts') ? absPath : absPath + '.ts'
   let indexPath = resolve(absPath, 'index.ts')
   return isFile(tsPath) ? tsPath : isDir(absPath) && isFile(indexPath) ? indexPath : error(`Cannot find module '${path}'.`)
 }
+
+let entryFile = localModulePath(option.input)
 
 function npmModulePath(pkg: string, from: string): string {
   let projRoot = dirname(from)
@@ -61,11 +68,7 @@ function npmModulePath(pkg: string, from: string): string {
   return error(`Cannot find module '${pkg}'.`)
 }
 
-let entryFile = localModulePath(option.input)
-
-/*
- * STEP 1: Type check
- */
+// Type check
 let diagnostics = ts.getPreEmitDiagnostics(
   ts.createProgram([entryFile], {
     strict: true,
@@ -76,11 +79,11 @@ let diagnostics = ts.getPreEmitDiagnostics(
 
 if (diagnostics.length) {
   diagnostics.forEach(d => console.log(d.messageText))
-  error('Errors.')
+  error('Type check Error.')
 }
 
 /*
- * STEP 2: Compile modules
+ * Compile modules
  */
 type Module = {
   id: number
@@ -91,6 +94,8 @@ type Module = {
 
 let moduleID = 0
 let fileModuleIdMap = new Map([[entryFile, moduleID]])
+
+console.log(fileModuleIdMap)
 
 let files = [entryFile]
 
@@ -188,4 +193,4 @@ for (let code of generate(modules)) {
   result += code + '\n'
 }
 
-writeFile(`./index.js`, result)
+writeFile(option.output, result)
