@@ -25,7 +25,7 @@ if (!option.input) error('No input is provided.')
 let isFile = (path: string) => exists(path) && stat(path).isFile()
 let isDir = (path: string) => exists(path) && stat(path).isDirectory()
 
-/* Resolve modules, support follows:
+/* Resolve graph, support follows:
   - module/
   - module/index
   - module/index.ts 
@@ -83,13 +83,13 @@ if (diagnostics.length) {
 }
 
 /*
- * Compile modules
+ * Compile graph
  */
 type Module = {
   id: number
   file: string
   deps: Map<string, number>
-  transpiled: string
+  code: string
 }
 
 let moduleId = 0
@@ -106,8 +106,6 @@ function compile(file: string): Module {
   source.forEachChild(node => {
     if (node.kind === ts.SyntaxKind.ImportDeclaration) {
       let importDecl = node as ts.ImportDeclaration
-
-      // module specifier should be a string literal
       let moduleSpecifier = importDecl.moduleSpecifier.getText(source)
       let dep = JSON.parse(moduleSpecifier) as string
 
@@ -117,6 +115,7 @@ function compile(file: string): Module {
       } else {
         depPath = npmModulePath(dep, file)
       }
+
       let depID = moduleToId.get(depPath)
       if (depID === undefined) {
         depID = ++moduleId
@@ -127,7 +126,7 @@ function compile(file: string): Module {
     }
   })
 
-  let transpiled = ts.transpileModule(content, {
+  let code = ts.transpileModule(content, {
     compilerOptions: {
       target: ts.ScriptTarget.ES5,
       module: ts.ModuleKind.CommonJS,
@@ -136,58 +135,49 @@ function compile(file: string): Module {
     }
   }).outputText
 
-  return { id, file, deps, transpiled }
+  return { id, file, deps, code }
 }
 
-let modules: Array<Module> = []
+// Create graph
+
+let graph: Array<Module> = []
 
 let file
 while ((file = files.shift())) {
-  modules.push(compile(file))
+  graph.push(compile(file))
 }
-
 /*
- * STEP 3: Code generation
+ * Create output code
  */
-function* generate(modules: Array<Module>): Iterable<string> {
-  yield ';(function (modules) {'
 
-  yield `
-var executedModules = {};
-(function executeModule(id) {
-  if (executedModules[id]) return executedModules[id];
+function generate(graph: Array<Module>): Iterable<string> {
+  let modules = ''
+  graph.forEach(mod => {
+    modules += `${mod.id}: [
+      function (require, module, exports) {
+        ${mod.code}
+      },
+      ${JSON.stringify(mod.deps)},
+    ],`;
+  })
 
-  var mod = modules[id];
-  var localRequire = function (path) {
-    return executeModule(mod[1][path]);
-  };
-  var module = { exports: {} };
-  executedModules[id] = module.exports;
-  mod[0](localRequire, module, module.exports);
-  return module.exports;
-})(0);
-`
-
-  yield '})({'
-
-  for (let mod of modules) {
-    yield `${mod.id}: [`
-    yield `function (require, module, exports) {`
-    yield mod.transpiled
-    yield '}, {'
-    for (let [key, val] of mod.deps) {
-      yield `${JSON.stringify(key)}: ${val},`
-    }
-    yield '}'
-    yield '],'
-  }
-
-  yield '})'
+  const result = `
+    (function(modules) {
+      function require(id) {
+        const [fn, mapping] = modules[id];
+        function localRequire(name) {
+          return require(mapping[name]);
+        }
+        const module = { exports : {} };
+        fn(localRequire, module, module.exports);
+        return module.exports;
+      }
+      require(0);
+    })({${modules}})
+  `;
+  return result
 }
 
-let result: string = ''
-for (let code of generate(modules)) {
-  result += code + '\n'
-}
+let result = generate(graph)
 
 writeFile(option.output, result)
