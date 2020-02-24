@@ -84,25 +84,21 @@ if (diagnostics.length) {
   error('Type check Error.')
 }
 
-/*
- * Compile graph
- */
+// Compile graph
 
 let pathQueue = [entryFile]
-let codes: string[] = []
+let blocks: string[] = []
 
 function compile(path: string) {
   let content = readFile(path, 'utf-8')
-  let source = ts.createSourceFile(path, content, ts.ScriptTarget.ES2015)
+  let source: ts.SourceFile = ts.createSourceFile(path, content, ts.ScriptTarget.ES2015)
 
-  source.forEachChild(node => {
+  source.forEachChild((node: ts.Node) => {
     const { ImportDeclaration, ExpressionStatement, FunctionDeclaration } = ts.SyntaxKind
     switch (node.kind) {
       case ImportDeclaration:
-        let importDecl = node as ts.ImportDeclaration
-        let moduleSpecifier = importDecl.moduleSpecifier.getText(source)
+        let moduleSpecifier = node.moduleSpecifier.getText(source)
         let dep = JSON.parse(moduleSpecifier) as string
-
         let depPath: string
         if (dep.startsWith('.')) {
           depPath = localModulePath(dep, path)
@@ -115,20 +111,20 @@ function compile(path: string) {
         const name = node.name.getText(source)
         const block = node.body.getText(source)
         let c = `function ${name}()${block}`
-        codes.push(c)
+        blocks.push(c)
         break
       case ExpressionStatement:
-        codes.push(node.expression.getText(source))
+        blocks.push(node.expression.getText(source))
         break
+      default:
+        error('not Supported now')
     }
   })
 }
 
 let path
-while ((path = pathQueue.shift())) {
-  compile(path)
-}
+while ((path = pathQueue.shift())) compile(path)
 
-let result = codes.join('\n\n')
+let result = blocks.join('\n\n')
 
 writeFile(option.output, result)
