@@ -94,7 +94,6 @@ type Module = {
 
 let moduleId = 0
 let moduleToId = new Map([[entryFile, moduleId]])
-
 let files = [entryFile]
 
 function compile(file: string): Module {
