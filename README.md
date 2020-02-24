@@ -5,7 +5,7 @@ Tiny library bundler only use TypeScript Compiler API.
 ### Motivation
 
 - npm publish a pure Typescript library
-- zero configs or plugins
+- zero config or plugin
 
 ### Install
 
