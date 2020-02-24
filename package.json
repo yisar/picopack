@@ -17,13 +17,14 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "demo":"node ./dist/index ./demo/index.ts"
+    "demo": "node ./dist/index.js ./demo/index.ts -o ./demo/index.js"
   },
   "dependencies": {
     "@types/node": "^10.1.4",
     "typescript": "^2.9.1"
   },
   "devDependencies": {
-    "moment": "^2.22.2"
+    "moment": "^2.22.2",
+    "nodemon": "^2.0.2"
   }
 }
