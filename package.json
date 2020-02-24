@@ -1,0 +1,29 @@
+{
+  "name": "@utatti/tinypack",
+  "version": "0.2.0",
+  "description": "A simple TypeScript module bundler",
+  "repository": "git@github.com:utatti/tinypack.git",
+  "author": "Jun <noraesae+dev@gmail.com>",
+  "license": "MIT",
+  "main": "dist/tinypack.js",
+  "bin": {
+    "tinypack": "./tinypack"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "demo":"node tinypack ./demo/index.ts"
+  },
+  "dependencies": {
+    "@types/node": "^10.1.4",
+    "typescript": "^2.9.1"
+  },
+  "devDependencies": {
+    "moment": "^2.22.2"
+  }
+}
