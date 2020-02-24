@@ -7,11 +7,20 @@ function error(msg: string): any {
   process.exit(1)
 }
 
-let input = process.argv[2]
+type Option = {
+  input: string
+  output: string
+}
 
-console.log(input)
+let option: Option = {} as Option
 
-if (!input) error('No input is provided.')
+for (let i = 0; i < process.argv.length; i++) {
+  let v = process.argv[i]
+  if (i === 2) option.input = v
+  if (v === '-o') option.output = process.argv[i + 1]
+}
+
+if (!option.input) error('No input is provided.')
 
 let isFile = (path: string) => exists(path) && stat(path).isFile()
 let isDir = (path: string) => exists(path) && stat(path).isDirectory()
@@ -52,7 +61,7 @@ function npmModulePath(pkg: string, from: string): string {
   return error(`Cannot find module '${pkg}'.`)
 }
 
-let entryFile = localModulePath(input)
+let entryFile = localModulePath(option.input)
 
 /*
  * STEP 1: Type check

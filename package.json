@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "demo":"node bin/tinypack ./demo/index.ts"
+    "demo":"node ./dist/index ./demo/index.ts"
   },
   "dependencies": {
     "@types/node": "^10.1.4",
