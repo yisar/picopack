@@ -2,11 +2,21 @@
 
 Tiny library bundler only use TypeScript Compiler API.
 
+### Motivation
+
+- npm publish a pure Typescript library
+- zero configs or plugins
+
+### Install
+
+```shell
+npm i picopack -g
+```
+
 ### Use
 
-```console
-yarn add picopack
-tinypack ./index.ts
+```shell
+tinypack ./index.ts -o dist
 ```
 
 ## License
