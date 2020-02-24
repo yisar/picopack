@@ -2,7 +2,7 @@ import { readFileSync as readFile, writeFileSync as writeFile, statSync as stat,
 import { resolve, dirname } from 'path'
 import * as ts from 'typescript'
 
-function error(msg: string): any {
+function error(msg: string): never {
   console.error(msg)
   process.exit(1)
 }
