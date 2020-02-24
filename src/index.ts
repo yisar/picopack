@@ -68,12 +68,14 @@ function npmModulePath(pkg: string, from: string): string {
   return error(`Cannot find module '${pkg}'.`)
 }
 
-// Type check
+// // Type check
 let diagnostics = ts.getPreEmitDiagnostics(
   ts.createProgram([entryFile], {
     strict: true,
     target: ts.ScriptTarget.Latest,
-    moduleResolution: ts.ModuleResolutionKind.NodeJs
+    moduleResolution: ts.ModuleResolutionKind.NodeJs,
+    skipLibCheck: true,
+    allowSyntheticDefaultImports: true
   })
 )
 
@@ -88,17 +90,15 @@ if (diagnostics.length) {
 type Module = {
   id: number
   file: string
-  deps: Map<string, number>
   code: string
 }
 
 let moduleId = 0
-let moduleToId = new Map([[entryFile, moduleId]])
+let patchToId = new Map([[entryFile, moduleId]])
 let files = [entryFile]
 
 function compile(file: string): Module {
-  let id = moduleToId.get(file)!
-  let deps = new Map<string, number>()
+  let id = patchToId.get(file)!
 
   let content = readFile(file, 'utf-8')
   let source = ts.createSourceFile(file, content, ts.ScriptTarget.ES2015)
@@ -116,26 +116,30 @@ function compile(file: string): Module {
         depPath = npmModulePath(dep, file)
       }
 
-      let depID = moduleToId.get(depPath)
+      let depID = patchToId.get(depPath)
       if (depID === undefined) {
         depID = ++moduleId
-        moduleToId.set(depPath, depID)
+        patchToId.set(depPath, depID)
         files.push(depPath)
       }
-      deps.set(dep, depID)
+      console.log(files,patchToId)
+    } else {
+      // console.log(node)
     }
   })
 
-  let code = ts.transpileModule(content, {
+  let tm = ts.transpileModule(content, {
     compilerOptions: {
       target: ts.ScriptTarget.ES5,
       module: ts.ModuleKind.CommonJS,
       noImplicitUseStrict: true,
       pretty: true
     }
-  }).outputText
+  })
 
-  return { id, file, deps, code }
+  let code = tm.outputText
+
+  return { id, file, code }
 }
 
 // Create graph
@@ -153,7 +157,7 @@ while ((file = files.shift())) {
 function generate(graph: Array<Module>): Iterable<string> {
   let result = ''
   graph.forEach(mod => {
-    result += mod.code;
+    result += mod.code
   })
   return result
 }
