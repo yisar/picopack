@@ -110,14 +110,12 @@ function compile(path: string) {
       case FunctionDeclaration:
         const name = node.name.getText(source)
         const block = node.body.getText(source)
-        let c = `function ${name}()${block}`
+        let c = `function ${name}()${block};`
         blocks.push(c)
         break
       case ExpressionStatement:
-        blocks.push(node.expression.getText(source))
+        blocks.push(node.expression.getText(source) + ';')
         break
-      default:
-        error('AST not Supported.')
     }
   })
 }
