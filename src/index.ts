@@ -96,34 +96,38 @@ function compile(path: string) {
   let source = ts.createSourceFile(path, content, ts.ScriptTarget.ES2015)
 
   source.forEachChild(node => {
-    if (node.kind === ts.SyntaxKind.ImportDeclaration) {
-      let importDecl = node as ts.ImportDeclaration
-      let moduleSpecifier = importDecl.moduleSpecifier.getText(source)
-      let dep = JSON.parse(moduleSpecifier) as string
+    const { ImportDeclaration, ExpressionStatement, FunctionDeclaration } = ts.SyntaxKind
+    switch (node.kind) {
+      case ImportDeclaration:
+        let importDecl = node as ts.ImportDeclaration
+        let moduleSpecifier = importDecl.moduleSpecifier.getText(source)
+        let dep = JSON.parse(moduleSpecifier) as string
 
-      let depPath: string
-      if (dep.startsWith('.')) {
-        depPath = localModulePath(dep, path)
-      } else {
-        depPath = npmModulePath(dep, path)
-      }
-      pathQueue.push(depPath)
-    } else if (node.kind === ts.SyntaxKind.ExpressionStatement) {
-      codes.push(node.expression.getText(source))
-    } else if (node.kind === ts.SyntaxKind.FunctionDeclaration) {
-      const name = node.name.getText(source)
-      const block = node.body.getText(source)
-      let c =  `function ${name}()${block}`
-      codes.push(c)
+        let depPath: string
+        if (dep.startsWith('.')) {
+          depPath = localModulePath(dep, path)
+        } else {
+          depPath = npmModulePath(dep, path)
+        }
+        pathQueue.push(depPath)
+        break
+      case FunctionDeclaration:
+        const name = node.name.getText(source)
+        const block = node.body.getText(source)
+        let c = `function ${name}()${block}`
+        codes.push(c)
+        break
+      case ExpressionStatement:
+        codes.push(node.expression.getText(source))
+        break
     }
   })
 }
 
 let path
-while(path=pathQueue.shift()){
+while ((path = pathQueue.shift())) {
   compile(path)
 }
-
 
 let result = codes.join('\n\n')
 
