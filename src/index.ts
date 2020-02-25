@@ -91,7 +91,7 @@ let blocks: string[] = []
 
 function compile(path: string) {
   let content = readFile(path, 'utf-8')
-  let source: ts.SourceFile = ts.createSourceFile(path, content, ts.ScriptTarget.ES2015)
+  let source: ts.SourceFile = ts.createSourceFile(path, content, ts.ScriptTarget.ES3)
 
   source.forEachChild((node: any) => {
     const { ImportDeclaration, ExpressionStatement, FunctionDeclaration, VariableStatement } = ts.SyntaxKind
@@ -117,7 +117,7 @@ function compile(path: string) {
         blocks.push(node.expression.getText(source) + ';')
         break
       case VariableStatement:
-        blocks.push('var ' + node.declarationList.declarations[0].getText(source))
+        blocks.push( node.declarationList.getText(source))
         break
     }
   })

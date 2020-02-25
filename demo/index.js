@@ -1,6 +1,6 @@
 console.log(module());
 
-var a = '111'
+const a = '111'
 
 function module(){
   let msg = 'hello world'
