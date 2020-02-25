@@ -1,5 +1,8 @@
 console.log(module());
 
+var a = '111'
+
 function module(){
-  return 'hello world'
+  let msg = 'hello world'
+  return msg
 };

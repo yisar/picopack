@@ -1,4 +1,7 @@
 
+const a = '111'
+
 export function module(): string {
-  return 'hello world'
+  let msg = 'hello world'
+  return msg
 }
